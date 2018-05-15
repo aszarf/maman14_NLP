@@ -89,6 +89,17 @@ class Tree:
         self.head = Tree.Node()
         self.__parsehelper = -1
 
+    def next_bracket(self, s, loc):
+        offset1 = s[loc:].find("(")
+        offset2 = s[loc:].find(")")
+        if offset1 == offset2 == -1:
+            return len(s)
+        else:
+            if offset1 != -1 and offset2 != -1:
+                return loc+min(offset1, offset2)
+            else:
+                return loc+max(offset1, offset2)
+        
     # Returns true if string represents a valid tree
     def __IsStringValid(self, s, loc, count):
         if type(s) != str:
@@ -97,11 +108,12 @@ class Tree:
             return count == 0
         if count < 0:
             return False
+        offset_next_bracket = self.next_bracket(s, loc+1)
         if s[loc] == '(':
-            return self.__IsStringValid(s, loc+1, count+1)
+            return self.__IsStringValid(s, offset_next_bracket, count+1)
         elif s[loc] == ')':
-            return self.__IsStringValid(s, loc+1, count-1)
-        return self.__IsStringValid(s, loc+1, count)
+            return self.__IsStringValid(s, offset_next_bracket, count-1)
+        return self.__IsStringValid(s, offset_next_bracket, count)
 
     # Recursively parses a string into a Tree
     def __rParse(self, node, s, loc):
