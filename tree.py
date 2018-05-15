@@ -43,14 +43,28 @@ class Tree:
         def IsLeaf(self):
             return self.num_children == 0
 
+        # Return list of tuples
+        def GetLeaves(self):
+            res = []
+            if self.IsLeaf():
+                
+                label = self.data.label.split(' ')
+                res = (label[0], label[1])
+
+                return [res]
+
+            for child in self.children:
+                res = res + child.GetLeaves()
+            return res
+            
         # Returns sentence part the sub-tree represents
         def LeavesToString(self):
             res = ''
             if self.IsLeaf():
                 label = self.data.label.split(' ')
                 res = label[1]
-                for i in range(2,len(label)):
-                    res = res + ' ' + label[i]
+                # for i in range(2,len(label)):
+                    # res = res + ' ' + label[i]
                 return res
             first = True
             for child in self.children:
@@ -89,7 +103,7 @@ class Tree:
         self.head = Tree.Node()
         self.__parsehelper = -1
 
-    def next_bracket(self, s, loc):
+    def __next_bracket(self, s, loc):
         offset1 = s[loc:].find("(")
         offset2 = s[loc:].find(")")
         if offset1 == offset2 == -1:
@@ -108,7 +122,7 @@ class Tree:
             return count == 0
         if count < 0:
             return False
-        offset_next_bracket = self.next_bracket(s, loc+1)
+        offset_next_bracket = self.__next_bracket(s, loc+1)
         if s[loc] == '(':
             return self.__IsStringValid(s, offset_next_bracket, count+1)
         elif s[loc] == ')':
@@ -164,7 +178,7 @@ class Tree:
 
     # Returns list of leaves (lexemes)
     def GetLeaves(self):
-        return self.LeavesToString().split(' ')
+        return self.head.GetLeaves()
 
     # Counts each type of leaf and returns dictionary of
     # counters
