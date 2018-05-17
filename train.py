@@ -1,41 +1,45 @@
-# Get command line arguments and allow for IDLE manual
-# argument input.
 import sys
 from trainers import *
 from tree import *
 
 def main(argv):
-	if len(argv) != 3:
-		print("Usage: <train filename> <smoothing (Y/N)>")
-		return
+    # Get command line arguments and allow for IDLE manual
+    # argument input.
+    if 'idlelib' in sys.modules:
+        if sys.modules['idlelib']:
+            print("Usage: <train filename> <smoothing (Y/N)>")
+            sys.argv.extend(input("Args: ").split())
 
-	filename = sys.argv[1]
-	smoothing = sys.argv[2]
+    if len(argv) != 3:
+        print("Usage: <train filename> <smoothing (Y/N)>")
+        return
 
-	# Read input file
-	file = open(filename, 'r')
-	lines = file.readlines()
-	file.close()
+    filename = sys.argv[1]
+    smoothing = sys.argv[2]
 
-	# Create parameter file
-	filename = filename.split('.')[0]
-	filename = filename + '-' + smoothing
+    # Read input file
+    file = open(filename, 'r')
+    lines = file.readlines()
+    file.close()
 
-	if smoothing == 'y' or smoothing == 'Y':
-		smoothing = True
-	else:
-		smoothing = False
+    # Create parameter file
+    filename = filename.split('.')[0]
+    filename = filename + '-' + smoothing
 
-	Train(filename, lines, smoothing)
+    if smoothing == 'y' or smoothing == 'Y':
+        smoothing = True
+    else:
+        smoothing = False
 
-	t = Tree()
-	t.ParseFromString(lines[0])
-	print(t)
-	print(t.ToString())
-	print(t.LeavesToString())
-	print(t.CountLeaves())
-	print(t.GramCount())
+    Train(filename, lines, smoothing)
 
+    t = Tree()
+    t.ParseFromString(lines[0])
+    print(t)
+    print(t.ToString())
+    print(t.LeavesToString())
+    print(t.CountLeaves())
+    print(t.GramCount())
 
 if __name__ == '__main__':
-	main(sys.argv)
+    main(sys.argv)
