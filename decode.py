@@ -1,5 +1,3 @@
-# Get command line arguments and allow for IDLE manual
-# argument input.
 import sys
 from decoders import *
 
