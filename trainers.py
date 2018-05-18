@@ -2,8 +2,13 @@
 
 from tree import *
 import math
+import random
 
-def Train(filename, lines, smoothing):
+LEX_TEMPLATE = "%s\t%s\t%f"
+RULE_TEMPLATE = "%f\t%s\t%s"
+RULE_TEMPLATE_CNF = "%s\t%s\t%s %s"
+
+def Train(filepath, lines, smoothing):
     
     leaves_count = {}
     gram_count = {}
@@ -24,19 +29,64 @@ def Train(filename, lines, smoothing):
             gram_count[key] = gram_count[key] + gram_dict[key]
     
     leaves_sum = float(reduce(lambda x,y: x+y, leaves_count.values()))
-    buf = ''
+    lines_lex = []
     for key in leaves_count:
-        prob = -math.log(leaves_count[key]/leaves_sum)
-        line = "%s\t%s\t%f\n" % (key[1], key[0], prob)
-        buf = buf + line
-    open(filename + ".lex", "wb").write(buf)
+        exists_line = filter(lambda x: x.startswith(key[1] + '\t'), lines_lex)
+        logprob = -math.log(leaves_count[key]/leaves_sum)
+        if len(exists_line) == 0:
+            line = LEX_TEMPLATE % (key[1], key[0], logprob)
+        else:
+            line = exists_line[0]
+            line = line + "\t%s\t%f" % (key[0], logprob)
+        lines_lex.append(line)
+    open(filepath + ".lex", "wb").write('\n'.join(lines_lex))
     
     gram_sum = float(reduce(lambda x,y: x+y, gram_count.values()))
-    buf = ''
+    lines_gram = []
     for key in gram_count:
-        prob = -math.log(gram_count[key]/gram_sum)
-        line = "%f\t%s\t%s\n" % (prob, key[0], ' '.join(key[1]))
-        buf = buf + line
-    open(filename + ".gram", "wb").write(buf)
+        logprob = -math.log(gram_count[key]/gram_sum)
+        line = RULE_TEMPLATE % (logprob, key[0], ' '.join(key[1]))
+        lines_gram.append(line)
+    open(filepath + ".gram", "wb").write('\n'.join(lines_gram))
+        
+    print "Train is done"
         
     return True
+    
+def gen_unused_symbol(symbol, symbols):
+    while symbol in symbols:
+        rand_chr = chr(random.randint(ord('A'), ord('Z')))
+        symbol = symbol + rand_chr
+    return symbol
+    
+def convert_to_CNF(filepath, lines):
+    ret_lines = []
+    new_symbols = []
+    for line in lines:
+        line = line[:-1] # without \n
+        logprob, root, childs = line.split('\t')
+        childs = childs.split(' ')
+        if len(childs) > 2:
+            new_lines = []
+            new_symbol_right = gen_unused_symbol(root+'0', new_symbols)
+            new_symbols.append(new_symbol_right)
+                
+            rule = RULE_TEMPLATE_CNF % (logprob, root, childs[0], new_symbol_right)
+            new_lines.append(rule)
+            for i in xrange(1, len(childs)-2):
+                new_symbol_left = new_symbol_right
+                new_symbol_right = gen_unused_symbol(root+str(i), new_symbols)
+                new_symbols.append(new_symbol_right)
+                rule = RULE_TEMPLATE_CNF % (logprob, new_symbol_left, childs[i], new_symbol_right)
+                new_lines.append(rule)
+            rule = RULE_TEMPLATE_CNF % (logprob, new_symbol_right, childs[-2], childs[-1])
+            new_lines.append(rule)
+            
+            ret_lines = ret_lines + new_lines
+        else:
+            ret_lines.append(line)
+        
+    open(filepath + '.CNF', 'wb').write('\n'.join(ret_lines))
+    print "CNF is done"
+    return True
+    
