@@ -13,6 +13,7 @@ def Decode(filename, lines, lex_lines, gram_lines):
     gram = GrammaticalDecode(gram_lines)
 
     # Use CYK to create relevant tree for each line
+    forest = ApplyCYK(lines, lex, gram)
 
     # Output forest to file
     
