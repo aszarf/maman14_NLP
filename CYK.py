@@ -7,12 +7,15 @@ def RunCYK(line, lex, gram):
     # Initialization
     CYK = []
     BP = []
+    S = []
     for i in range(len(words)):
-        CYK[i] = []
-        BP[i] = []
+        CYK.append([])
+        BP.append([])
+        S.append([])
         for j in range(len(words)+1):
-            CYK[i][j] = {}
-            BP[i][j] = {}
+            CYK[i].append({})
+            BP[i].append({})
+            S[i].append({})
     words = line.split(' ')
     for i in range(len(words)):
         if words[i] in lex:
@@ -36,11 +39,13 @@ def RunCYK(line, lex, gram):
                                     if P > CYK[i][j][X]:
                                         CYK[i][j][X] = P
                                         BP[i][j][X] = (Y,Z)
+                                        S[i][j][X] = s
                                 else:
                                     CYK[i][j][X] = P
                                     BP[i][j][X] = (Y,Z)
+                                    S[i][j][X] = s
     
-    return (CYK,BP)
+    return (CYK,BP,S)
 
 # Returns probability for line being sentence
 def CYKLineLogProb(line, lex, gram):
@@ -62,8 +67,7 @@ def CYKGetLineTree(line, lex, gram):
     t = Tree()
     CYK_result = RunCYK(line, lex, gram)
 
-    # TODO: Parse BP['S'] into tree or find alternative
-    #       roots (not necessary in CNF).
+    t.ParseFromCYK(line, CYK_result)
     
     return t
 

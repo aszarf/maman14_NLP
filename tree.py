@@ -168,6 +168,36 @@ class Tree:
 
         self.head = self.__rParse(self.head, s, 0)
 
+    # Recursively parses a string into a Tree
+    def __rCYK(self, node, line, CYK, l, r, tag):
+        if not tag in CYK[1][l][r]:
+            return
+        pair = CYK[1][l][r][tag]
+        X = pair[0]
+        Y = pair[1]
+        s = CYK[2][l][r][tag]
+        node.data.label = tag
+        l_node = Tree.Node()
+        r_node = Tree.Node()
+        if l+1 < s:
+            self.__rCYK(l_node, line, l, s, X)
+        else:
+            l_node.data.label = line.split[' '][l]
+        if r-1 > s+1:
+            self.__rCYK(r_node, line, s+1, r, Y)
+        else:
+            r_node.data.label = line.split[' '][r]
+        node.AddChild(l_node)
+        node.AddChild(r_node)
+
+    # Parses a CYK table (P, BP, S) into a matching tree 
+    # starting from BP[0][n]['S'].
+    #   P - Probabilities
+    #   BP - Back Pointers
+    #   S - Trajectory matrix
+    def ParseFromCYK(self, line, CYK):
+        self.__rCYK(head, line, CYK, 0, len(line), 'S')
+
     # Returns a string representation of tree
     def ToString(self):
         return self.head.ToString()
