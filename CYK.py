@@ -21,6 +21,8 @@ def RunCYK(line, lex, gram):
         if words[i] in lex:
             for tag in lex[words[i]]:
                 CYK[i][i+1][tag] = lex[words[i]][tag]
+        else:
+            CYK[i][i+1]['NN'] = 0
 
     # Recursion, assuming CNF
     for length in range(1, len(words)-1):

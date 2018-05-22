@@ -16,5 +16,14 @@ def Decode(filename, lines, lex_lines, gram_lines):
     forest = ApplyCYK(lines, lex, gram)
 
     # Output forest to file
+    output = open(filename + '.parsed', 'w')
+    output_lines = []
+
+    for t in forest:
+        line = t.ToString() + '\n'
+        output_lines.append(line)
+
+    output.writelines(output_lines)    
+    output.close()    
     
     return
