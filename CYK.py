@@ -8,6 +8,7 @@ def RunCYK(line, lex, gram):
     CYK = []
     BP = []
     S = []
+    words = line.split(' ')
     for i in range(len(words)):
         CYK.append([])
         BP.append([])
@@ -16,7 +17,6 @@ def RunCYK(line, lex, gram):
             CYK[i].append({})
             BP[i].append({})
             S[i].append({})
-    words = line.split(' ')
     for i in range(len(words)):
         if words[i] in lex:
             for tag in lex[words[i]]:
