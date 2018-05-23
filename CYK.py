@@ -1,6 +1,7 @@
 # CYK Functions
 from tree import *
 import math
+import timelog
 
 # Creates chart for sentence
 def RunCYK(line, lex, gram):
@@ -9,7 +10,7 @@ def RunCYK(line, lex, gram):
     BP = []
     S = []
     words = line.split(' ')
-    for i in range(len(words)):
+    for i in range(len(words)+1):
         CYK.append([])
         BP.append([])
         S.append([])
@@ -17,25 +18,24 @@ def RunCYK(line, lex, gram):
             CYK[i].append({})
             BP[i].append({})
             S[i].append({})
-    for i in range(len(words)):
-        if words[i] in lex:
-            for tag in lex[words[i]]:
-                CYK[i][i+1][tag] = lex[words[i]][tag]
+    for i in range(1, len(words)+1):
+        if words[i-1] in lex:
+            for tag in lex[words[i-1]]:
+                CYK[i-1][i][tag] = lex[words[i-1]][tag]
         else:
-            CYK[i][i+1]['NN'] = 0
+            CYK[i-1][i]['NN'] = 0
 
     # Recursion, assuming CNF
-    for length in range(1, len(words)-1):
-        for i in range(len(words) - length):
-            j = i + length
-            for s in range(i+1, j-1):
+    for j in range(1, len(words)+1):
+        for i in range(j-2,-1,-1):
+            for s in range(i+1, j):
                 for Y in CYK[i][s]:
-                    for Z in CYK[s+1][j]:
+                    P2 = CYK[i][s][Y]
+                    for Z in CYK[s][j]:
+                        P3 = CYK[s][j][Z]
                         if (Y,Z) in gram[1]:
                             for X in gram[1][(Y,Z)]:
                                 P1 = gram[1][(Y,Z)][X]
-                                P2 = CYK[i][s][Y]
-                                P3 = CYK[s+1][j][Z]
                                 P = P1+P2+P3
                                 if X in CYK[i][j]:
                                     if P > CYK[i][j][X]:
@@ -46,7 +46,6 @@ def RunCYK(line, lex, gram):
                                     CYK[i][j][X] = P
                                     BP[i][j][X] = (Y,Z)
                                     S[i][j][X] = s
-    
     return (CYK,BP,S)
 
 # Returns probability for line being sentence
@@ -67,17 +66,40 @@ def CYKCanLineExist(line, lex, gram):
 # Creates a highest probability tree for line
 def CYKGetLineTree(line, lex, gram):
     t = Tree()
+    print("Start CYK: " + str(timelog.timelog()))
     CYK_result = RunCYK(line, lex, gram)
-
+    print("Parse to tree: " + str(timelog.timelog()))
     t.ParseFromCYK(line, CYK_result)
+    print("Tree done: " + str(timelog.timelog()))
     
     return t
+
+# Removes all but maximum grammar derivations
+def SparsifyGrammar(gram):
+    res = ({},{})
+
+    P = 0
+    for g in range(2):
+        for tag in gram[g]:
+            for val in gram[g][tag]:
+                if not tag in res[g]:
+                    res[g][tag] = {}
+                    res[g][tag][val] = gram[g][tag][val]
+                    P = gram[g][tag][val]
+                elif gram[g][tag][val] > P:
+                    res[g][tag] = {}
+                    res[g][tag][val] = gram[g][tag][val]
+                    P = gram[g][tag][val]
+                elif gram[g][tag][val] == P:
+                    res[g][tag][val] = gram[g][tag][val]
+    
+    return res 
 
 # Creates string-forest for list of sentences
 def ApplyCYK(lines, lex, gram):
     res = []
     i = 1
-    l = []
+    timelog.timelog()
     for line in lines:
         t = Tree()
         if line.find('(') > -1:
@@ -86,12 +108,9 @@ def ApplyCYK(lines, lex, gram):
                 line = t.LeavesToString()
             except Exception:
                 pass
+        gram = SparsifyGrammar(gram)
         res.append(CYKGetLineTree(line, lex, gram).ToString())
-        l.append(len(line.split(' ')))
-        if i % 5 == 0:
-            print("Applied CYK to " + str(i) + " lines. Lens:", l)
-            print("Last line:", res[i-1])
-            l = []
+        print("Applied CYK to " + str(i) + " lines.")
         i = i + 1
 
     return res

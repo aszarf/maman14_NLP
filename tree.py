@@ -33,6 +33,8 @@ class Tree:
 
         # Returns string representation of sub-tree
         def ToString(self):
+            if self.num_children == 0:
+                return self.data.label
             res = '(' + self.data.label
             for child in self.children:
                 res = res + ' ' + child.ToString()
@@ -180,13 +182,19 @@ class Tree:
         l_node = Tree.Node()
         r_node = Tree.Node()
         if l+1 < s:
-            self.__rCYK(l_node, line, l, s, X)
+            self.__rCYK(l_node, line, CYK, l, s, X)
         else:
-            l_node.data.label = line.split[' '][l]
-        if r-1 > s+1:
-            self.__rCYK(r_node, line, s+1, r, Y)
+            l_node.data.label = X
+            l_leaf = Tree.Node()
+            l_leaf.data.label = line.split(' ')[l]
+            l_node.AddChild(l_leaf)
+        if r-1 > s:
+            self.__rCYK(r_node, line, CYK, s, r, Y)
         else:
-            r_node.data.label = line.split[' '][r]
+            r_node.data.label = Y
+            r_leaf = Tree.Node()
+            r_leaf.data.label = line.split(' ')[s]
+            r_node.AddChild(r_leaf)
         node.AddChild(l_node)
         node.AddChild(r_node)
 
