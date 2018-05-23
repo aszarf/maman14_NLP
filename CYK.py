@@ -73,10 +73,11 @@ def CYKGetLineTree(line, lex, gram):
     
     return t
 
-# Creates forest for list of sentences
+# Creates string-forest for list of sentences
 def ApplyCYK(lines, lex, gram):
     res = []
-
+    i = 1
+    l = []
     for line in lines:
         t = Tree()
         if line.find('(') > -1:
@@ -85,6 +86,12 @@ def ApplyCYK(lines, lex, gram):
                 line = t.LeavesToString()
             except Exception:
                 pass
-        res.append(CYKGetLineTree(line, lex, gram))
+        res.append(CYKGetLineTree(line, lex, gram).ToString())
+        l.append(len(line.split(' ')))
+        if i % 5 == 0:
+            print("Applied CYK to " + str(i) + " lines. Lens:", l)
+            print("Last line:", res[i-1])
+            l = []
+        i = i + 1
 
     return res

@@ -10,7 +10,7 @@ def LexicalDecode(lex_lines):
             tag = parts[i-1]
             if not word in lex:
                 lex[word] = {}
-            lex[word][tag] = parts[i]
+            lex[word][tag] = float(parts[i])
 
     return lex
 
@@ -22,9 +22,7 @@ def GrammaticalDecode(gram_lines):
     for line in gram_lines:
         parts = line.rstrip('\n').split('\t')
         head = parts[1]
-        tail = []
-        for part in range(2, len(parts)):
-            tail.append(part)
+        tail = parts[2].split(' ')
         tail = tuple(tail)
         if not head in gram_top_down:
             gram_top_down[head] = {}

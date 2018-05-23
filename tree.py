@@ -196,6 +196,7 @@ class Tree:
     #   BP - Back Pointers
     #   S - Trajectory matrix
     def ParseFromCYK(self, line, CYK):
+        #print(CYK[1])
         l = len(line.split(' '))
         self.__rCYK(self.head, line, CYK, 0, l, 'S')
 

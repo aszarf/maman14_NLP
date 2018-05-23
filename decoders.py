@@ -12,7 +12,7 @@ def Decode(filename, lines, lex_lines, gram_lines):
     # Create lists of gram probs
     gram = GrammaticalDecode(gram_lines)
 
-    # Use CYK to create relevant tree for each line
+    # Use CYK to create relevant tree string for each line
     forest = ApplyCYK(lines, lex, gram)
 
     # Output forest to file
@@ -20,7 +20,7 @@ def Decode(filename, lines, lex_lines, gram_lines):
     output_lines = []
 
     for t in forest:
-        line = t.ToString() + '\n'
+        line = t + '\n'
         output_lines.append(line)
 
     output.writelines(output_lines)    
