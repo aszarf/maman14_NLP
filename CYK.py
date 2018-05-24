@@ -66,11 +66,8 @@ def CYKCanLineExist(line, lex, gram):
 # Creates a highest probability tree for line
 def CYKGetLineTree(line, lex, gram):
     t = Tree()
-    print("Start CYK: " + str(timelog.timelog()))
     CYK_result = RunCYK(line, lex, gram)
-    print("Parse to tree: " + str(timelog.timelog()))
     t.ParseFromCYK(line, CYK_result)
-    print("Tree done: " + str(timelog.timelog()))
     
     return t
 
@@ -101,16 +98,29 @@ def ApplyCYK(lines, lex, gram):
     i = 1
     timelog.timelog()
     for line in lines:
-        t = Tree()
         if line.find('(') > -1:
+            t = Tree()
             try:
                 t.ParseFromString(line)
                 line = t.LeavesToString()
             except Exception:
                 pass
         gram = SparsifyGrammar(gram)
-        res.append(CYKGetLineTree(line, lex, gram).ToString())
+        res_line = CYKGetLineTree(line, lex, gram).ToString()
+        if res_line.strip(' ') == '':
+            t = Tree()
+            t.head.data.label = 'S'
+            for word in line.rstrip('\n').split(' '):
+                w = Tree.Node()
+                w.data.label = word
+                tag_w = Tree.Node()
+                tag_w.data.label = 'NN'
+                tag_w.AddChild(w)
+                t.head.AddChild(tag_w)
+            res_line = t.ToString()
+        res.append(res_line)
         print("Applied CYK to " + str(i) + " lines.")
         i = i + 1
-
+    print("Process time: " + str(timelog.timelog()))
+    
     return res
