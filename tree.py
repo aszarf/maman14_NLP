@@ -23,11 +23,13 @@ class Tree:
             self.num_children = 0
             self.children = []
             self.data = Tree.Data()
+            self.parent = None
 
         # Adds Node child to node
         def AddChild(self, child):
             if not isinstance(child, Tree.Node):
                 raise Exception('Can only add Node child!')
+            child.parent = self
             self.children.append(child)
             self.num_children = self.num_children + 1
 
@@ -45,6 +47,16 @@ class Tree:
         def IsLeaf(self):
             return self.num_children == 0
 
+        # Returns list of siblings of Node
+        def GetSiblings(self):
+            res = []
+            if self.parent == None:
+                return res
+            for sib in self.parent.children:
+                if sib != self:
+                    res.append(sib)
+            return res
+        
         # Return list of tuples
         def GetLeaves(self):
             res = []
