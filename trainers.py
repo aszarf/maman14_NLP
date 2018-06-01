@@ -3,12 +3,19 @@
 from tree import *
 import math
 import random
+# import CNF
 
 LEX_TEMPLATE = "%s\t%s\t%f"
 RULE_TEMPLATE = "%f\t%s\t%s"
 RULE_TEMPLATE_CNF = "%s\t%s\t%s %s"
 
 def Train(filepath, lines, smoothing):
+    
+    # for line in lines:
+        # t = Tree()
+        # t.ParseFromString(line)
+        # CNF.ApplyCNF(t,0)
+    # return
     
     leaves_count = {}
     gram_count = {}
@@ -53,30 +60,42 @@ def Train(filepath, lines, smoothing):
         
     return True
     
-def gen_unused_symbol(symbol, symbols):
-    while symbol in symbols:
-        rand_chr = chr(random.randint(ord('A'), ord('Z')))
-        symbol = symbol + rand_chr
-    return symbol
+# def gen_unused_symbol(symbol, symbols):
+    # while symbol in symbols:
+        # rand_chr = chr(random.randint(ord('A'), ord('Z')))
+        # symbol = symbol + rand_chr
+    # return symbol
+	
+def create_new_symbol(root, childs, index):
+    res = root
+    for i,j in enumerate(childs):
+        if i == index:
+            res = res + '*' + childs[i]
+        else:
+            res = res + '-' + childs[i]
+    return res
     
 def convert_to_CNF(filepath, lines):
     ret_lines = []
-    new_symbols = []
+    # new_symbols = []
     for line in lines:
         line = line[:-1] # without \n
         logprob, root, childs = line.split('\t')
         childs = childs.split(' ')
         if len(childs) > 2:
             new_lines = []
-            new_symbol_right = gen_unused_symbol(root+'0', new_symbols)
-            new_symbols.append(new_symbol_right)
+            # new_symbol_right = gen_unused_symbol(root+'0', new_symbols)
+            root_new_symbol = create_new_symbol(root, childs, 0)
+            new_symbol_right = create_new_symbol(root, childs, 1)
+            # new_symbols.append(new_symbol_right)
                 
-            rule = RULE_TEMPLATE_CNF % (logprob, root, childs[0], new_symbol_right)
+            rule = RULE_TEMPLATE_CNF % (logprob, root_new_symbol, childs[0], new_symbol_right)
             new_lines.append(rule)
             for i in xrange(1, len(childs)-2):
                 new_symbol_left = new_symbol_right
-                new_symbol_right = gen_unused_symbol(root+str(i), new_symbols)
-                new_symbols.append(new_symbol_right)
+                # new_symbol_right = gen_unused_symbol(root+str(i), new_symbols)
+                new_symbol_right = create_new_symbol(root, childs, i+1)
+                # new_symbols.append(new_symbol_right)
                 rule = RULE_TEMPLATE_CNF % (logprob, new_symbol_left, childs[i], new_symbol_right)
                 new_lines.append(rule)
             rule = RULE_TEMPLATE_CNF % (logprob, new_symbol_right, childs[-2], childs[-1])
