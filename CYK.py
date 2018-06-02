@@ -1,5 +1,6 @@
 # CYK Functions
 from tree import *
+from CNF import *
 import math
 import timelog
 
@@ -106,8 +107,10 @@ def ApplyCYK(lines, lex, gram):
             except Exception:
                 pass
         gram = SparsifyGrammar(gram)
-        res_line = CYKGetLineTree(line, lex, gram).ToString()
-        if res_line.strip(' ') == '':
+        res_tree = CYKGetLineTree(line, lex, gram)
+        res_tree = RemoveCNF(res_tree)
+        res_line = res_tree.ToString()
+        if res_line.strip(' ') == '()':
             t = Tree()
             t.head.data.label = 'S'
             for word in line.rstrip('\n').split(' '):
