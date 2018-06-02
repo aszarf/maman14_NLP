@@ -110,7 +110,7 @@ def ApplyCYK(lines, lex, gram):
         res_tree = CYKGetLineTree(line, lex, gram)
         res_tree = RemoveCNF(res_tree)
         res_line = res_tree.ToString()
-        if res_line.strip(' ') == '':
+        if res_line.strip(' ') == '()':
             t = Tree()
             t.head.data.label = 'S'
             for word in line.rstrip('\n').split(' '):
