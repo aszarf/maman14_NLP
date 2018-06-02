@@ -27,7 +27,7 @@ def move_asterisk_right(label):
     
     return res[:-1]
     
-def children_to_tuples(children_list,wanted_parent,h):
+def build_new_child(children_list, wanted_parent, h):
     new_child = Tree.Node()
     new_child.data.label = move_asterisk_right(wanted_parent.data.label)
     
@@ -36,7 +36,7 @@ def children_to_tuples(children_list,wanted_parent,h):
         new_child.num_children = len(new_child.children)
     else:
         left_child = Markovize(children_list[0], h)
-        right_child = Markovize(children_to_tuples(children_list[1:],new_child, h), h)
+        right_child = Markovize(build_new_child(children_list[1:],new_child, h), h)
         new_child.children = [left_child, right_child]
         new_child.num_children = 2
         for c in new_child.children:
@@ -58,7 +58,7 @@ def ApplyCNF(t, h):
         n.data.label = "%s*%s" % (n.data.label, "-".join(map(lambda x: x.data.label.split(' ')[0], n.children)))
         
         left_child = Markovize(n.children[0], h)
-        right_child = Markovize(children_to_tuples(n.children[1:],n.children[1].parent, h), h)
+        right_child = Markovize(build_new_child(n.children[1:],n.children[1].parent, h), h)
         n.children = [left_child, right_child]
         n.num_children = 2
     for c in n.children:
