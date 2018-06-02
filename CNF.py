@@ -3,12 +3,14 @@ from tree import *
 # Transforms Node n in Tree t to h-level Markovization
 # def Markovize(t, n, h): # h - view on brothers
 def Markovize(n, h):
-    
+    # for i in xrange(h):
+        
     # TODO: Implement. May change params if necessary.
 
     return n
 
-def DeMarkovize(t, n, h): # h - view on brothers
+# def DeMarkovize(t, n, h): # h - view on brothers
+def DeMarkovize(n):
 
     # TODO: Implement. May change params if necessary.
 
@@ -45,7 +47,10 @@ def children_to_tuples(children_list,wanted_parent,h):
 # Transforms grammar tree into CNF grammar tree
 def ApplyCNF(t, h):
     if hasattr(t, 'head'):
-        n = t.head.children[0] # to remove 'TOP'
+        n = Tree.Node()
+        n.data.label = t.head.data.label
+        n.children = t.head.children
+        n.num_children = len(t.head.children)
     else:
         n = t
     
@@ -60,16 +65,36 @@ def ApplyCNF(t, h):
         n.num_children = 2
     for c in n.children:
         ApplyCNF(c, h)
-
-    if hasattr(t, 'head'):
-        t.head.children = [n]
         
     return t
 
 # Transforms CNF grammar tree into original grammar tree
-def RemoveCNF(t): # CNF tree to tree
-
-    # TODO: Implement.
+def RemoveCNF(t):
+    if hasattr(t, 'head'):
+        n = Tree.Node()
+        n.data.label = t.head.data.label
+        n.children = t.head.children
+        n.num_children = len(t.head.children)
+    else:
+        n = t
+          
+    t = DeMarkovize(t)
+            
+    for c in n.children:
+        out = RemoveCNF(c)
+        if isinstance(out, list):
+            
+            new_children = [n.children[0]] + out
+            if len(n.data.label.split('*')[0].split('-')) == 1:
+                n.children = new_children
+                n.data.label = n.data.label.split('*')[0]
+                return n
+            else:
+                return new_children
     
+    if n.data.label.find('*') != -1:
+        if len(n.data.label.split('*')[0].split('-')) != 1:
+            return n.children
+        
     return t
 
