@@ -1,8 +1,9 @@
 from tree import *
 
 # Transforms Node n in Tree t to h-level Markovization
-def Markovize(t, n, h): # h - view on brothers
-    pass
+# def Markovize(t, n, h): # h - view on brothers
+def Markovize(n, h):
+    
     # TODO: Implement. May change params if necessary.
 
     return n
@@ -24,52 +25,44 @@ def move_asterisk_right(label):
     
     return res[:-1]
     
-def children_to_tuples(children_list,h):
+def children_to_tuples(children_list,wanted_parent,h):
     new_child = Tree.Node()
-    new_child.data.label = move_asterisk_right(children_list[0].parent.data.label)
-
+    new_child.data.label = move_asterisk_right(wanted_parent.data.label)
     new_child.children = []
     
     if len(children_list) <= 2:
         new_child.children = children_list
     else:
-        new_child.children.append(children_list[0])
-        new_child.children.append(children_to_tuples(children_list[1:], h))
+        left_child = Markovize(children_list[0], h)
+        right_child = Markovize(children_to_tuples(children_list[1:],new_child, h), h)
+        new_child.children = [left_child, right_child]
         for c in new_child.children:
             ApplyCNF(c, h)
     new_child.num_children = len(new_child.children)
-    if len(new_child.children) > 2:
-        import ipdb;ipdb.set_trace()
+
     return new_child
     
 # Transforms grammar tree into CNF grammar tree
-def ApplyCNF(t, h): # tree to CNF tree
-    print t.ToString()
-    # import ipdb;ipdb.set_trace()
+def ApplyCNF(t, h):
     if hasattr(t, 'head'):
         n = t.head.children[0] # to remove 'TOP'
     else:
         n = t
     
-    
     if len(n.children) > 2:
         n.data.label = "%s*%s" % (n.data.label, "-".join(map(lambda x: x.data.label.split(' ')[0], n.children)))
         children = n.children
         n.children = []
-        n.children.append(children[0])
-        n.children.append(children_to_tuples(children[1:], h))
+        
+        left_child = Markovize(children[0], h)
+        right_child = Markovize(children_to_tuples(children[1:],children[1].parent, h), h)
+        n.children = [left_child, right_child]
         n.num_children = 2
     for c in n.children:
         ApplyCNF(c, h)
 
     if hasattr(t, 'head'):
         t.head.children = [n]
-        print t.ToString()
-        import ipdb;ipdb.set_trace()
-    # print t.ToString()
-    
-    	
-    # TODO: Copy implementation to here.
         
     return t
 
