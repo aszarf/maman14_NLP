@@ -114,11 +114,8 @@ def ApplyCYK(lines, lex, gram):
             t = Tree()
             t.head.data.label = 'S'
             for word in line.rstrip('\n').split(' '):
-                w = Tree.Node()
-                w.data.label = word
                 tag_w = Tree.Node()
-                tag_w.data.label = 'NN'
-                tag_w.AddChild(w)
+                tag_w.data.label = 'NN ' + word
                 t.head.AddChild(tag_w)
             res_line = t.ToString()
         res.append(res_line)
