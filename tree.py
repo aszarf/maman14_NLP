@@ -184,11 +184,18 @@ class Tree:
     def __rCYK(self, node, line, CYK, l, r, tag):
         if not tag in CYK[1][l][r]:
             return
+        node.data.label = tag
+
         pair = CYK[1][l][r][tag]
         X = pair[0]
-        Y = pair[1]
         s = CYK[2][l][r][tag]
-        node.data.label = tag
+        if s == -1:
+            c_node = Tree.Node()
+            self.__rCYK(c_node, line, CYK, l, r, X)
+            node.AddChild(c_node)
+            return
+        
+        Y = pair[1]
         l_node = Tree.Node()
         r_node = Tree.Node()
         if l+1 < s:

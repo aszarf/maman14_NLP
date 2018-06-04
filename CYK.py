@@ -4,6 +4,31 @@ from CNF import *
 import math
 import timelog
 
+# Adds productions and unary meta-production to CYK tables
+def AddToCYK(CYK, BP, S, gram, i, s, j, tag, P23):
+    for X in gram[1][tag]:
+        P1 = gram[1][tag][X]
+        P = P1 + P23
+        if X in CYK[i][j]:
+            if P > CYK[i][j][X]:
+                CYK[i][j][X] = P
+                BP[i][j][X] = tag
+                S[i][j][X] = s
+        else:
+            CYK[i][j][X] = P
+            BP[i][j][X] = tag
+            S[i][j][X] = s
+        unary = tuple(X)
+        if unary in gram[1] and not unary in CYK[i][j]:
+            trio = AddToCYK(CYK, BP, S, \
+                            gram,       \
+                            i, -1, j,   \
+                            unary, P)
+            CYK = trio[0]
+            BP = trio[1]
+            S = trio[2]
+    return (CYK,BP,S)
+
 # Creates chart for sentence
 def RunCYK(line, lex, gram):
     # Initialization
@@ -26,27 +51,24 @@ def RunCYK(line, lex, gram):
         else:
             CYK[i-1][i]['NN'] = 0
 
-    # Recursion, assuming CNF
+    # Recursion, assuming CNF (with unary productions)
     for j in range(1, len(words)+1):
         for i in range(j-2,-1,-1):
             for s in range(i+1, j):
-                for Y in CYK[i][s]:
-                    P2 = CYK[i][s][Y]
-                    for Z in CYK[s][j]:
-                        P3 = CYK[s][j][Z]
-                        if (Y,Z) in gram[1]:
-                            for X in gram[1][(Y,Z)]:
-                                P1 = gram[1][(Y,Z)][X]
-                                P = P1+P2+P3
-                                if X in CYK[i][j]:
-                                    if P > CYK[i][j][X]:
-                                        CYK[i][j][X] = P
-                                        BP[i][j][X] = (Y,Z)
-                                        S[i][j][X] = s
-                                else:
-                                    CYK[i][j][X] = P
-                                    BP[i][j][X] = (Y,Z)
-                                    S[i][j][X] = s
+                if len(CYK[s][j]) > 0:
+                    for Y in CYK[i][s]:
+                        P2 = CYK[i][s][Y]
+                        for Z in CYK[s][j]:
+                            P3 = CYK[s][j][Z]
+                            if (Y,Z) in gram[1]:
+                                P23 = P2 + P3
+                                trio = AddToCYK(CYK, BP, S,\
+                                                gram,      \
+                                                i, s, j,   \
+                                                (Y,Z), P23)
+                                CYK = trio[0]
+                                BP = trio[1]
+                                S = trio[2]
     return (CYK,BP,S)
 
 # Returns probability for line being sentence
@@ -73,10 +95,12 @@ def CYKGetLineTree(line, lex, gram):
     return t
 
 # Removes all but maximum grammar derivations
-def SparsifyGrammar(gram):
+def SparsifyGrammar(gram, d):
     res = ({},{})
 
-    P = 0
+    if d < 1:
+        return gram
+
     for g in range(2):
         for tag in gram[g]:
             for val in gram[g][tag]:
@@ -106,10 +130,11 @@ def ApplyCYK(lines, lex, gram):
                 line = t.LeavesToString()
             except Exception:
                 pass
-        gram = SparsifyGrammar(gram)
+        gram = SparsifyGrammar(gram, 1)
         res_tree = CYKGetLineTree(line, lex, gram)
         res_tree = RemoveCNF(res_tree)
         res_line = res_tree.ToString()
+        #print(res_line)
         if res_line.strip(' ') == '()':
             t = Tree()
             t.head.data.label = 'S'
