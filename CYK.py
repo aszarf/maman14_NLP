@@ -2,13 +2,44 @@
 from tree import *
 from CNF import *
 import math
+import time
 import timelog
+import itertools
 
-# Adds productions and unary meta-production to CYK tables
-def AddToCYK(CYK, BP, S, gram, i, s, j, tag, P23):
-    for X in gram[1][tag]:
-        P1 = gram[1][tag][X]
-        P = P1 + P23
+# Retrieves original tag for CNF node
+def Unmask(tag, to_left):
+    res = tag
+    parts = tag.split('*')
+    if len(parts) == 1:
+        return res
+    left_parts = parts[0].split('-')
+    right_parts = parts[1].split('-')
+    if to_left:
+        res = left_parts[len(left_parts)-1]
+    else:
+        res = right_parts[0]
+    return res
+
+# Adds productions and unary meta-productions to CYK tables
+def AddToCYK(CYK, BP, S, gram, i, s, j, tag, u_tag, P23):
+    tm0 = time.time()
+    # Create list of producers of tag in its masked and
+    # unmasked forms.
+    pre_list = {}
+    if tag in gram[1]:
+        set1 = gram[1][tag]
+        pre_list = set1.copy()
+    if u_tag in gram[1] and not tag == u_tag:
+        set2 = gram[1][u_tag]
+        pre_list.update(set2)
+        if tag in gram[1]:
+            for pre in set(set1.keys()) & set(set2.keys()):
+                pre_list[pre] = set1[pre]+set2[pre]
+    tm1 = time.time()
+    # Add probs for producers and relevant unary
+    # productions  
+    for X in pre_list:
+        P = pre_list[X] + P23
         if X in CYK[i][j]:
             if P > CYK[i][j][X]:
                 CYK[i][j][X] = P
@@ -19,14 +50,15 @@ def AddToCYK(CYK, BP, S, gram, i, s, j, tag, P23):
             BP[i][j][X] = tag
             S[i][j][X] = s
         unary = tuple(X)
+        u_unary = tuple(Unmask(X, True))
         if unary in gram[1] and not unary in CYK[i][j]:
-            trio = AddToCYK(CYK, BP, S, \
+            (CYK,BP,S) = AddToCYK(CYK, BP, S, \
                             gram,       \
                             i, -1, j,   \
-                            unary, P)
-            CYK = trio[0]
-            BP = trio[1]
-            S = trio[2]
+                            unary, u_unary, P)
+    #print(i,s,j)
+    #print(tag,u_tag)
+    #print(tm1-tm0,time.time()-tm1)
     return (CYK,BP,S)
 
 # Creates chart for sentence
@@ -56,19 +88,19 @@ def RunCYK(line, lex, gram):
         for i in range(j-2,-1,-1):
             for s in range(i+1, j):
                 if len(CYK[s][j]) > 0:
-                    for Y in CYK[i][s]:
-                        P2 = CYK[i][s][Y]
-                        for Z in CYK[s][j]:
-                            P3 = CYK[s][j][Z]
-                            if (Y,Z) in gram[1]:
-                                P23 = P2 + P3
-                                trio = AddToCYK(CYK, BP, S,\
-                                                gram,      \
-                                                i, s, j,   \
-                                                (Y,Z), P23)
-                                CYK = trio[0]
-                                BP = trio[1]
-                                S = trio[2]
+                    for tag in itertools.product( \
+                                   CYK[i][s], CYK[s][j]):
+                        u_tag = (Unmask(tag[0], True), \
+                                 Unmask(tag[1], False))
+                        if not tag in gram[1] and \
+                           not u_tag in gram[1]:
+                            continue
+                        P = CYK[i][s][tag[0]] + \
+                                        CYK[s][j][tag[1]]
+                        (CYK,BP,S) = AddToCYK(CYK, BP, S,\
+                                        gram,      \
+                                        i, s, j,   \
+                                        tag, u_tag, P)
     return (CYK,BP,S)
 
 # Returns probability for line being sentence
@@ -122,6 +154,8 @@ def ApplyCYK(lines, lex, gram):
     res = []
     i = 1
     timelog.timelog()
+    tm = time.time()
+    gram = SparsifyGrammar(gram, 1)
     for line in lines:
         if line.find('(') > -1:
             t = Tree()
@@ -130,11 +164,15 @@ def ApplyCYK(lines, lex, gram):
                 line = t.LeavesToString()
             except Exception:
                 pass
-        gram = SparsifyGrammar(gram, 1)
+        print(line)
+        print("Line length: ", len(line.split(' ')))
         res_tree = CYKGetLineTree(line, lex, gram)
+        print("CNF:")
+        print(res_tree.ToString())
         res_tree = RemoveCNF(res_tree)
         res_line = res_tree.ToString()
-        #print(res_line)
+        print("Not CNF:")
+        print(res_line)
         if res_line.strip(' ') == '()':
             t = Tree()
             t.head.data.label = 'S'
@@ -145,7 +183,8 @@ def ApplyCYK(lines, lex, gram):
             res_line = t.ToString()
         res.append(res_line)
         print("Applied CYK to " + str(i) + " lines.")
+        print("Time: " + str(timelog.timelog()))
         i = i + 1
-    print("Process time: " + str(timelog.timelog()))
+    print("Process time: " + str(time.time()-tm))
     
     return res
