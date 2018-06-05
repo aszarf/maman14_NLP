@@ -27,16 +27,15 @@ def move_asterisk_right(label):
     
     return res[:-1]
     
-def children_to_tuples(children_list,wanted_parent,h):
+def build_new_child(children_list,wanted_parent,h):
     new_child = Tree.Node()
     new_child.data.label = move_asterisk_right(wanted_parent.data.label)
-    new_child.children = []
     
     if len(children_list) <= 2:
         new_child.children = children_list
     else:
         left_child = Markovize(children_list[0], h)
-        right_child = Markovize(children_to_tuples(children_list[1:],new_child, h), h)
+        right_child = Markovize(build_new_child(children_list[1:],new_child, h), h)
         new_child.children = [left_child, right_child]
         for c in new_child.children:
             ApplyCNF(c, h)
@@ -53,14 +52,12 @@ def ApplyCNF(t, h):
         n.num_children = len(t.head.children)
     else:
         n = t
-    
+        
     if len(n.children) > 2:
         n.data.label = "%s*%s" % (n.data.label, "-".join(map(lambda x: x.data.label.split(' ')[0], n.children)))
-        children = n.children
-        n.children = []
         
-        left_child = Markovize(children[0], h)
-        right_child = Markovize(children_to_tuples(children[1:],children[1].parent, h), h)
+        left_child = Markovize(n.children[0], h)
+        right_child = Markovize(build_new_child(n.children[1:],n.children[1].parent, h), h)
         n.children = [left_child, right_child]
         n.num_children = 2
     for c in n.children:
@@ -78,7 +75,7 @@ def RemoveCNF(t):
     else:
         n = t
           
-    t = DeMarkovize(t)
+    n = DeMarkovize(n)
             
     for c in n.children:
         out = RemoveCNF(c)
@@ -96,5 +93,5 @@ def RemoveCNF(t):
         if len(n.data.label.split('*')[0].split('-')) != 1:
             return n.children
         
-    return t
+    return n
 
