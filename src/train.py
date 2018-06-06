@@ -32,20 +32,6 @@ def main(argv):
         smoothing = False
 
     Train(filepath, lines, smoothing)
-    
-    filepath = filepath + ".gram"
-    file = open(filepath, 'r')
-    lines = file.readlines()
-    file.close()
-    convert_to_CNF(filepath, lines)
-
-    # t = Tree()
-    # t.ParseFromString(lines[0])
-    # print(t)
-    # print(t.ToString())
-    # print(t.LeavesToString())
-    # print(t.CountLeaves())
-    # print(t.GramCount())
 
 if __name__ == '__main__':
     main(sys.argv)

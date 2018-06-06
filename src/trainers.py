@@ -85,6 +85,6 @@ def convert_to_CNF(filepath, lines, h):
         logprob = -math.log(gram_count[key]/gram_sum)
         line = RULE_TEMPLATE % (logprob, key[0], ' '.join(key[1]))
         lines_gram.append(line)
-    open(filepath + ".gram.CNF", "wb").write('\n'.join(lines_gram))
+    open("%s.gram.CNF.%d" % (filepath, h), "wb").write('\n'.join(lines_gram))
     print "CNF is done"
     return True
