@@ -1,34 +1,47 @@
 from tree import *
 
 # Transforms Node n in Tree t to h-level Markovization
-def Markovize(parent, n, h):
+def Markovize(parent, n, h):    
+    if h == -1:
+        return n
+    
     if n.data.label.find('@') != -1:
         return n
+    elif n.data.label.find(' ') != -1:
+        leave = n.data.label.split(' ')[1]
+        n.data.label = n.data.label.split(' ')[0]
+    else:
+        leave = None
+        
     extension = '@'
     left_brothers = n.data.label.split('*')[0]
-    if left_brothers:
+    if n.data.label.find('*') != -1:
         left_brothers = left_brothers.split('-')
         left_brothers = left_brothers[1:] # without parent
+    else:
+        left_brothers = []
     
-    if n.data.label.find('*') != -1:
+    if len(left_brothers) > 0:
         h = min(len(left_brothers), h)
     else:
         h = min(len(parent.children)-1, h)
     
-    for i in xrange(len(left_brothers)-h, h):
-        if n.data.label.find('*') != -1:
-            extension = extension + '/' + left_brothers[i]
+    for i in xrange(h):
+        if len(left_brothers) > 0:
+            extension = extension + '/' + left_brothers[::-1][i]
         else:
             # Only one brother
             extension = extension + '/' + parent.children[0].data.label.split(' ')[0]
+            break
 
     extension = extension + '/'
     if len(extension) == 2:
         extension = extension + '/'
     n.data.label = n.data.label + extension
     
-    print n.data.label
-    import ipdb;ipdb.set_trace()
+    if leave:
+        n.data.label = n.data.label + ' ' + leave
+    
     return n
 
 def DeMarkovize(n):
@@ -49,9 +62,18 @@ def move_asterisk_right(label):
 def build_new_child(children_list, original_parent, wanted_parent,h):
     new_child = Tree.Node()
     new_child.data.label = move_asterisk_right(wanted_parent.data.label)
+    new_child.parent = wanted_parent
     
     if len(children_list) <= 2:
         new_child.children = children_list
+        if len(children_list) == 2:
+            if new_child.children[1].data.label.find(' ') != -1:
+                leave = new_child.children[1].data.label.split(' ')[1]
+            else:
+                leave = None
+            new_child.children[1].data.label = move_asterisk_right(new_child.data.label.split(' ')[0])
+            if leave:
+                new_child.children[1].data.label = new_child.children[1].data.label + ' ' + leave
     else:
         left_child = children_list[0]
         tmp = build_new_child(children_list[1:], original_parent, new_child, h)
@@ -74,15 +96,22 @@ def ApplyCNF(t, h):
     else:
         n = t
         
+    original_parent_t = Tree()
+    original_parent_t.ParseFromString(n.ToString())
+    original_parent = Tree.Node()
+    original_parent.data.label = original_parent_t.head.data.label
+    original_parent.children = original_parent_t.head.children
+    original_parent.num_children = len(original_parent_t.head.children)
+                
     if len(n.children) == 2:
-        n.children[1] = Markovize(n, n.children[1], h)
+        n.children[1] = Markovize(original_parent, n.children[1], h)
     elif len(n.children) > 2:
         n.data.label = n.data.label.split('@')[0]
         n.data.label = "%s*%s" % (n.data.label, "-".join(map(lambda x: x.data.label.split(' ')[0], n.children)))
         
         left_child = n.children[0]
         tmp = build_new_child(n.children[1:], n, n.children[1].parent, h)
-        right_child = Markovize(n, tmp, h)
+        right_child = Markovize(original_parent, tmp, h)
         n.children = [left_child, right_child]
         n.num_children = 2
     
@@ -123,6 +152,8 @@ def RemoveCNF(t):
     if n.data.label.find('*') != -1:
         if len(n.data.label.split('*')[0].split('-')) != 1:
             return n.children
+        else:
+            n.data.label = n.data.label.split('*')[0]
         
     return n
 
