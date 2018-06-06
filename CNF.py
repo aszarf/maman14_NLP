@@ -102,7 +102,7 @@ def ApplyCNF(t, h):
     original_parent.data.label = original_parent_t.head.data.label
     original_parent.children = original_parent_t.head.children
     original_parent.num_children = len(original_parent_t.head.children)
-                
+                              
     if len(n.children) == 2:
         n.children[1] = Markovize(original_parent, n.children[1], h)
     elif len(n.children) > 2:
@@ -110,7 +110,7 @@ def ApplyCNF(t, h):
         n.data.label = "%s*%s" % (n.data.label, "-".join(map(lambda x: x.data.label.split(' ')[0], n.children)))
         
         left_child = n.children[0]
-        tmp = build_new_child(n.children[1:], n, n.children[1].parent, h)
+        tmp = build_new_child(n.children[1:], original_parent, n, h)
         right_child = Markovize(original_parent, tmp, h)
         n.children = [left_child, right_child]
         n.num_children = 2
@@ -118,7 +118,7 @@ def ApplyCNF(t, h):
     for c in n.children:
         ApplyCNF(c, h)
         
-    return t
+    return n
 
 # Transforms CNF grammar tree into original grammar tree
 def RemoveCNF(t):
@@ -129,11 +129,6 @@ def RemoveCNF(t):
         n.num_children = len(t.head.children)
     else:
         n = t
-        
-    # if n.data.label == 'TOP':
-        # if n.children[0].data.label != 'S':
-            # new_node = Tree.Node()
-            # new_node.data.label = 'S'
           
     n = DeMarkovize(n)
             
