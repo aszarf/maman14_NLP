@@ -33,5 +33,9 @@ def main(argv):
 
     Train(filepath, lines, smoothing)
 
+    convert_to_CNF(filepath, lines, -1)
+    convert_to_CNF(filepath, lines, 0)
+    convert_to_CNF(filepath, lines, 1)
+    
 if __name__ == '__main__':
     main(sys.argv)
